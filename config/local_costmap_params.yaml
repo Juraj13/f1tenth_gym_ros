@@ -1,9 +1,9 @@
 local_costmap:
-  global_frame: /odom
+  global_frame: map
   static_map: false
   rolling_window: true
-  width: 100
-  height: 100
+  width: 5
+  height: 5
   update_frequency: 5.0
   publish_frequency: 10.0
 

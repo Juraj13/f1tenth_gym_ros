@@ -10,23 +10,12 @@
   <arg name="base_local_planner" value="teb_local_planner/TebLocalPlannerROS" />
   <!--<arg name="base_local_planner" value="base_local_planner/TrajectoryPlannerROS" />-->
 
-  <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
-
-    <param name="base_global_planner" value="$(arg base_global_planner)"/>
-    <param name="base_local_planner" value="$(arg base_local_planner)"/>
-    <param name="GlobalPlanner/use_dijkstra" value="true"/>  
-    <rosparam file="$(find f1tenth_gym_ros)/config/planner_params.yaml" command="load"/>
-
-    <!-- observation sources located in costmap_common.yaml -->
-    <rosparam file="$(find f1tenth_gym_ros)/config/costmap_common_params.yaml" command="load" ns="global_costmap" />
-    <rosparam file="$(find f1tenth_gym_ros)/config/costmap_common_params.yaml" command="load" ns="local_costmap" />
-
-    <!-- local costmap, needs size -->
-    <rosparam file="$(find f1tenth_gym_ros)/config/costmap_local_params.yaml" command="load" ns="local_costmap" />
-
-    <!-- static global costmap, static map provides size -->
-    <rosparam file="$(find f1tenth_gym_ros)/config/costmap_global_params.yaml" command="load" ns="global_costmap"/>
-  </node>
-
+<node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
+<rosparam file="$(find f1tenth_gym_ros)/config/costmap_common_params.yaml" command="load" ns="global_costmap" />
+<rosparam file="$(find f1tenth_gym_ros)/config/costmap_common_params.yaml" command="load" ns="local_costmap" />
+<rosparam file="$(find f1tenth_gym_ros)/config/local_costmap_params.yaml" command="load" />
+<rosparam file="$(find f1tenth_gym_ros)/config/global_costmap_params.yaml" command="load" />
+<rosparam file="$(find f1tenth_gym_ros)/config/base_local_planner_params.yaml" command="load" />
+</node>
 
   </launch>
