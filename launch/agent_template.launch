@@ -7,7 +7,7 @@
   
   <!-- Launch local and global planner -->
   <arg name="base_global_planner" default="global_planner/GlobalPlanner"/>
-  <arg name="base_local_planner" value="dwa_local_planner/DWAPlannerROS" />
+  <arg name="base_local_planner" value="teb_local_planner/TebLocalPlannerROS" />
   <!--<arg name="base_local_planner" value="base_local_planner/TrajectoryPlannerROS" />-->
 
   <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
