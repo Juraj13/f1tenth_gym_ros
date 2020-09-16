@@ -9,7 +9,7 @@
   <include file="$(find f1tenth_gym_ros)/launch/racecar_model.launch"/>
 
   <!-- Launch gym bridge node -->
-  <rosparam command="load" file="$(find f1tenth_gym_ros)/params.yaml"/>
+  <rosparam command="load" file="$(find f1tenth_gym_ros)/config/params.yaml"/>
   <param name="map_path" value="$(arg map)"/>
   <node pkg="f1tenth_gym_ros" name="gym_bridge" type="gym_bridge.py" output="screen"/>
 

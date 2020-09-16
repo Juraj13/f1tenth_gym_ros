@@ -1,0 +1,35 @@
+controller_frequency: 5.0
+recovery_behaviour_enabled: true
+
+DWAPlannerROS:
+
+  footprint_model:
+    type: "polygon"
+    vertices: [[-0.1, -0.2], [-0.1, 0.2], [0.4, 0.2], [0.4, -0.2]]
+  
+  # Robot Configuration Parameters
+  max_vel_trans: 20.0
+  min_vel_trans: 0.0
+  
+  max_vel_x: 20.0
+  min_vel_x: -20.0
+  max_vel_y: 0.0
+  min_vel_y: 0.0
+
+  max_vel_theta: 3.2
+  min_vel_theta: 0
+  
+  acc_lim_x: 9.51
+  acc_lim_y: 0.0
+  acc_lim_trans: 9.51
+  acc_lim_th: 3.2
+
+  holonomic_robot: false
+  sim_time: 3
+
+  # Goal Tolerance Parameters
+  xy_goal_tolerance: 0.2
+  yaw_goal_tolerance: 0.1
+  latch_xy_goal_tolerance: false
+
+  meter_scoring: true
