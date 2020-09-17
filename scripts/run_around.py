@@ -59,7 +59,7 @@ class GlobalRun(object):
 				goal_pub.pose.orientation.z = self.goal[i][2]
 				goal_pub.pose.orientation.w = self.goal[i][3]
 				self.pub.publish(goal_pub)
-				while (distance > 1.5):
+				while (distance > 1.5) and (not rospy.is_shutdown()):
 					distance = get_distance (self.robot_x, self.goal[i][0], self.robot_y, self.goal[i][1])
 					rate.sleep()
 		rospy.spin()
@@ -67,7 +67,7 @@ class GlobalRun(object):
 
 if __name__ == "__main__":
 
-	rospy.init_node("global_run_node")
+	rospy.init_node("run_around")
 	try:
 		gr = GlobalRun()
 	except rospy.ROSInterruptException:
