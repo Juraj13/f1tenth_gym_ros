@@ -23,4 +23,7 @@
 <node pkg="f1tenth_gym_ros" type="run_around.py" name="run_around_node" output="screen"/>
 <node pkg="f1tenth_gym_ros" type="pure_pursuit.py" name="pure_pursuit_node" output="screen"/>
 
+<!-- Start GUI for setting initalization parameters. -->
+<node pkg="rqt_gui" type="rqt_gui" name="rqt_gui"/>
+
   </launch>

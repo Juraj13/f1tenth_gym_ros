@@ -5,6 +5,8 @@ import tf
 from nav_msgs.msg import Odometry, Path
 from ackermann_msgs.msg import AckermannDriveStamped
 from geometry_msgs.msg import PointStamped
+from dynamic_reconfigure.server import Server
+from f1tenth_gym_ros.cfg import RacecarConfig
 
 
 
@@ -35,10 +37,10 @@ class PurePursuit(object):
 	def calculate_pure_pursuit(self):
 
 		L = 0.3302
-		diff_min = 0.2
-		speed = 2
+		speed = self.speed
 		#look-ahead distance ld based on the speed of the vehicle
-		ld = 0.5 * speed
+		ld = self.coefficient * speed
+		diff_min = ld
 		length = len(self.path_position)
 
 		#find position(x,y) on the path that is ld away from the robot.
@@ -73,11 +75,11 @@ class PurePursuit(object):
 
 		#get distance of robot and goal position
 		dist_rg = get_distance(self.robot_x, self.goal_x, self.robot_y, self.goal_y)
-		if dist_rg < 0.05:
+		if dist_rg < 0.1:
 			dist_rg = 0
-		#decrease the robot speed if the distance is less then 0.5.
-		if dist_rg <= 0.5:
-			speed = (speed * dist_rg) / 0.5
+		#decrease the robot speed if the distance is less then parameter decelerate_dist.
+		if dist_rg <= self.decelerate_dist:
+			speed = (speed * dist_rg) / self.decelerate_dist
 
 		#publish speed and steering angle of the robot
 		whereto = AckermannDriveStamped()
@@ -90,6 +92,14 @@ class PurePursuit(object):
 		self.pub.publish(whereto)
 
 
+	def config_callback(self, config, level):
+		"""Get configuration parameters from rqt_recongifure"""
+
+		rospy.loginfo("""Reconfiugre Request: {speed}, {coefficient}""".format(**config))
+		self.speed = config.speed
+		self.coefficient = config.coefficient
+		self.decelerate_dist = config.decelerate_dist
+		return config
 
 
 	def planner_callback(self, data):
@@ -101,7 +111,7 @@ class PurePursuit(object):
 		self.path_position = []
 		self.length = len(data.poses)
 
-		for i in range(0,self.length):
+		for i in range(0, self.length):
 			self.path_position.append([data.poses[i].pose.position.x, data.poses[i].pose.position.y])
 
 
@@ -117,8 +127,9 @@ class PurePursuit(object):
 
 
 	def __init__(self):
-		"""Create subscribers and publishers."""
+		"""Create subscribers, publishers and servers."""
 
+		srv = Server(RacecarConfig, self.config_callback)
 		rospy.Subscriber("/odom", Odometry, self.odometry_callback, queue_size = 1)
 		rospy.sleep(0.5) 
 		rospy.Subscriber("/move_base/TebLocalPlannerROS/local_plan", Path, self.planner_callback, queue_size = 1)
@@ -137,7 +148,7 @@ class PurePursuit(object):
 
 if __name__ == "__main__":
 
-	rospy.init_node("pure_pursuit_node")
+	rospy.init_node("Pure_pursuit_node")
 	try:
 		pp = PurePursuit()
 	except rospy.ROSInterruptException:
