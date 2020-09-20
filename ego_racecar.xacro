@@ -31,7 +31,29 @@
       <material name="blue"/>
     </visual>
   </link>
+          <!--Virtual transformations -->
+  <!-- ##################################### -->
+  <link name="p1"/>
+  <joint name="base_to_p1" type="fixed">
+    <parent link="base_link"/>
+    <child link="p1"/>
+    <origin xyz="-1.0 -1.0 0"/>
+  </joint>
 
+  <link name="p2"/>
+  <joint name="base_to_p2" type="fixed">
+    <parent link="base_link"/>
+    <child link="p2"/>
+    <origin xyz="-1.0 1.0 0"/>
+  </joint>
+
+  <link name="goal_link"/>
+  <joint name="base_to_goal" type="fixed">
+    <parent link="base_link"/>
+    <child link="goal_link"/>
+    <origin xyz="-2.0 0.0 0"/>
+  </joint>
+  <!-- ##################################### -->
   <joint name="base_to_laser_model" type="fixed">
     <parent link="base_link"/>
     <child link="laser_model"/>
