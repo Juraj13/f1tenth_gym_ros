@@ -77,9 +77,9 @@ class PurePursuit(object):
 		dist_rg = get_distance(self.robot_x, self.goal_x, self.robot_y, self.goal_y)
 		if dist_rg < 0.1:
 			dist_rg = 0
-		#decrease the robot speed if the distance is less then parameter decelerate_dist.
+		#increase the robot speed if the distance is less then parameter decelerate_dist.
 		if dist_rg <= self.decelerate_dist:
-			speed = (speed * dist_rg) / self.decelerate_dist
+			speed = (speed * self.decelerate_dist) / dist_rg
 
 		#publish speed and steering angle of the robot
 		whereto = AckermannDriveStamped()
