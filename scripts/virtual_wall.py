@@ -11,9 +11,15 @@ from skimage.draw import line_aa
 
 
 class VirtualWall(object):
+	"""
+	Virtual wall node 
+
+	Generates imaginary wall behind the car so global planner could plan entire lap at once. 
+	Two walls are built based on robots location, one in the start and other in the middle of the lap.
+	"""
 
 	def odometry_callback(self, data):
-		"""Get Robot postition and orientation"""
+		"""Get Robot postition and orientation."""
 
 		self.robot_x = data.pose.pose.position.x
 		self.robot_y = data.pose.pose.position.y
@@ -22,135 +28,133 @@ class VirtualWall(object):
 		self.robot_qua_z = data.pose.pose.orientation.z
 		self.robot_qua_w = data.pose.pose.orientation.w
 
-	def costmap_callback(self, data):
-		self.costmap_width = data.info.width
-		self.costmap_height = data.info.height
-		self.costmap_resolution = data.info.resolution
-		self.costmap_origin = data.info.origin.position
-		self.mapload_time = data.info.map_load_time
-		self.costmap_data = data.data
-		self.costmap = np.array(self.costmap_data).reshape(self.costmap_width, self.costmap_height)
 
-	def planner_callback(self, data):
-		"""
-		Get path from path planner node. 
-		Make a list of all the poses in the path.
-		"""
-		if self.flag2 != 0:
-			self.path_positions_again.append(data.poses)
-			self.i = self.i+1
-			self.flag2  = self.flag2-1
+	def map_callback(self, data):
+		"""Get map information."""
+
+		self.map_width = data.info.width
+		self.map_height = data.info.height
+		self.map_resolution = data.info.resolution
+		self.map_origin = data.info.origin.position
+		self.mapload_time = data.info.map_load_time
+		self.map_data = data.data
+
+		# Reshape the map to 2D array.
+		self.map = np.array(self.map_data).reshape(self.map_width, self.map_height)
+
 
 	def pose_to_pixel(self, pose_x, pose_y):
+		"""Transform pose (x,y) to pixel (x,y) in the map image. """
 
-		pix_x = int((pose_x - self.costmap_origin.x) / self.costmap_resolution)
-		pix_y = int((pose_y - self.costmap_origin.y) / self.costmap_resolution)
-		return pix_x, pix_y
+		pix_x = int((pose_x - self.map_origin.x) / self.map_resolution)
+		pix_y = int((pose_y - self.map_origin.y) / self.map_resolution)
 
-
-
-	def calculate_pose(self):
-		t = self.tf_listener_.getLatestCommonTime("/base_link", "/map")
-		p1 = PoseStamped()
-		p1.header.frame_id = "map"
-		p1.header.stamp = t
-		p1.pose.position.x = self.wall_pose_x
-		return self.tf_listener_.transformPose("/base_link", p1)
-		
+		return [pix_x, pix_y]
 
 
-	def build_wall(self):
+	def build_wall(self, corner1_pix, corner2_pix):
+		"""Build imaginary wall defined by two pixels (corner1_pix, corner2_pix)"""
 
+		# Define new map same as the one form /map topic
 		new_map = OccupancyGrid()
 		new_map.header.stamp = rospy.Time.now()
-		new_map.info.width = self.costmap_width
-		new_map.info.height = self.costmap_height
-		new_map.info.resolution = self.costmap_resolution
-		new_map.info.origin.position = self.costmap_origin
+		new_map.info.width = self.map_width
+		new_map.info.height = self.map_height
+		new_map.info.resolution = self.map_resolution
+		new_map.info.origin.position = self.map_origin
 		new_map.info.map_load_time = self.mapload_time
+		new_map_array = np.array(self.map_data).reshape(self.map_width, self.map_height)
 
-		new_map_array = np.array(self.costmap_data).reshape(self.costmap_width, self.costmap_height)
+		# Generate a line through two pixels. Get row, column and value (0-1) od each pixel in the line.
+		rr, cc, val = line_aa(corner1_pix[0], corner1_pix[1], corner2_pix[0], corner2_pix[1])
 
-		self.r1 = self.v[1]+self.s/2
-		self.r2 = self.v[1]-self.s/2
-		r1_x, r1_y = self.pose_to_pixel(self.v[0], self.r1)
-		r2_x, r2_y = self.pose_to_pixel(self.v[0], self.r2)
+		# Scale the pixel values to range 0-100.
+		new_map_array[cc, rr] = val * 100
 
-
-		rr, cc, val = line_aa(r1_x, r1_y, r2_x, r2_y)
-
-
-		new_map_array[cc, rr] =  val * 100
-		new_map_array = new_map_array.astype(np.int8)
+		# Change every pixels value to int and reshape map to list.
 		new_map_array_int = []
-		for i in range(0,self.costmap_width):
-			for j in range(0,self.costmap_height):
+		for i in range(0,self.map_width):
+			for j in range(0,self.map_height):
 				new_map_array_int.append(new_map_array[i][j].item())
+
+		# Make new map a tuple and publish it
 		reshape_tuple = tuple(new_map_array_int)
 		new_map.data = reshape_tuple
 		self.pub.publish(new_map)
 
+		# Flag set to 1 if the map
+		self.flag = 1
 
+	def give_if_new_wall(self, i):
+		"""Return True if robot is in the position for new wall to be generated"""
 
+		if i == 0:
+			return (self.robot_x >= self.wall_positions[i][0]) and self.corner1[1] >= self.robot_y >= self.corner2[1]
+		else:
+			return self.robot_x <= self.wall_positions[i][0] and self.corner1[1] >= self.robot_y >= self.corner2[1]
 
 
 
 	def __init__(self):
-		# neka inicijalizacija
-		self.i = 0
-		self.flag2 = 10
-		self.path_positions_again =[]
-		rospy.Subscriber("/odom", Odometry, self.odometry_callback, queue_size = 1)
-		rospy.Subscriber("/map", OccupancyGrid, self.costmap_callback, queue_size = 1)
-		rospy.Subscriber("/move_base/TebLocalPlannerROS/local_plan", Path, self.planner_callback, queue_size = 1)
+		"""
+		Create subscribers, publishers.
+		Follow robot position, build walls and give goal position to global planner.
+		
+		"""
+		# Initialization
+		self.flag = 0
+		self.num_laps = 2
+		self.num_of_walls = 2
+		self.wall_positions = [[-0.1, 0], [5.14, -24.04]]
+		self.goal_positions = [[-0.2, 0], [5.30, -24.04]]
+		self.length = [4.1, 3.9]
+
+		# Create subscribers
+		rospy.Subscriber("/odom", Odometry,self.odometry_callback, queue_size = 1)
+		rospy.Subscriber("/map", OccupancyGrid, self.map_callback, queue_size = 1)
 		rospy.sleep(0.5)
+
+		# Create publishers
 		self.pub = rospy.Publisher("/map2",OccupancyGrid, queue_size = 1)
-#		self.tf = TransformListener()
 		self.pub2 = rospy.Publisher("/move_base_simple/goal", PoseStamped, queue_size = 1)
-		self.pub3 = rospy.Publisher ("/move_base/TebLocalPlannerROS/global_plan", Path, queue_size = 1)
 		rospy.sleep(0.5)
-#		trans, rot  = self.tf.lookupTransform('/map', 'ego_racecar/goal_link', rospy.Time(0))
-		rate = rospy.Rate(5)
-		self.v = np.array([-0.1, 0])
-		self.s = 4.1
-		self.build_wall()
-		rospy.sleep(2)
-		goal_pub = PoseStamped()
-		self.wall_pose_x = -0.2
-		goal_pub.header.stamp = rospy.Time.now()
-		goal_pub.header.frame_id = "map"
-		goal_pub.pose.position.x = self.wall_pose_x
-		goal_pub.pose.position.y = 0
-		goal_pub.pose.position.z = 0
-		goal_pub.pose.orientation.x = 0
-		goal_pub.pose.orientation.y = 0
-		goal_pub.pose.orientation.z = 0
-		goal_pub.pose.orientation.w = 1
-		self.pub2.publish(goal_pub)
-		rate1 = rospy.Rate(5)
-		rate = rospy.Rate (50)
-		self.flag = 1
-		while not rospy.is_shutdown() and self.flag == 1:
-			if -0.1 < self.robot_x < 0 and self.r2 < self.robot_y < self.r1:
-				goal_pub.header.stamp = rospy.Time.now()
-				self.pub2.publish(goal_pub)
-				new_path = Path()
-				new_path.header.stamp = rospy.Time.now()
-				new_path.header.frame_id = "/map"
-				self.flag2 = 10
-				i = 0
-				while self.flag2 != 0 :
-					new_path.poses = self.path_positions_again[i]
-					self.pub3.publish(new_path)
-					self.flag2 = self.flag2-1
-					i = i+1
-					rate1.sleep()
+
+		for i in range(0, self.num_laps):
+			for j in range (0, self.num_of_walls):
+
+				# Find wall corners
+				self.corner1 = [self.wall_positions[j][0], self.wall_positions[j][1]+self.length[j]/2]
+				self.corner2 = [self.wall_positions[j][0], self.wall_positions[j][1]-self.length[j]/2]
+
+				# Find wall corner pixels
+				corner1_pix = self.pose_to_pixel(self.corner1[0], self.corner1[1])
+				corner2_pix =self.pose_to_pixel(self.corner2[0], self.corner2[1])
+
+				# Check if robot has passed the wall
+				while not self.give_if_new_wall(j):
+					rospy.sleep(0.2)
+
+				self.build_wall(corner1_pix, corner2_pix)
+
+				# Wait for map to be published
+				while not self.flag == 1:
+					rospy.sleep(0.2)
 
 				self.flag = 0
-			rate.sleep()
 
-
-
+				# Define and publish goal pose for global planner
+				goal_pub = PoseStamped()
+				goal_pub.header.stamp = rospy.Time.now()
+				goal_pub.header.frame_id = "map"
+				goal_pub.pose.position.x = self.goal_positions[j][0]
+				goal_pub.pose.position.y = self.goal_positions[j][1]
+				goal_pub.pose.position.z = 0
+				goal_pub.pose.orientation.x = 0
+				goal_pub.pose.orientation.y = 0
+				goal_pub.pose.orientation.z = 0
+				goal_pub.pose.orientation.w = 1
+				rospy.sleep(0.2)
+				self.pub2.publish(goal_pub)
 
 		rospy.spin()
 
