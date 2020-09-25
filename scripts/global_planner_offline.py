@@ -7,12 +7,7 @@ import numpy as np
 # my classes
 from TrajectoryPlanner import TrajectoryPlanner
 
-
-#get a list of points to fit a spline to as well
-N = 10
-xmin = 0 
-xmax = 10 
-x = np.linspace(xmin,xmax,N)
+# !!!!! remember trasformation(y = 600-y)   !!!!!!!!!!!!!!!!!
 
 trajectory_points = np.empty((0,2))
 trajectory_circles = []
