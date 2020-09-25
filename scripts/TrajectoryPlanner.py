@@ -31,12 +31,13 @@ class TrajectoryPlanner:
 
     def update_trajectory_point(self, pointID, pos):
         self.trajectory_points[pointID, :] = pos
-        self.trajectory = self.trajectory[0:(pointID-1)*self.N, :]
-        self.thetas = self.thetas[0:(pointID-1)*self.N]
-        if len(self.thetas) == 0:
-            self.thetas = np.array([self.theta0])
         if pointID == 0:
             pointID = 1
+        self.trajectory = self.trajectory[0:(pointID-1)*self.N, :]
+        self.thetas = self.thetas[0:pointID]
+        if len(self.thetas) == 0:
+            self.thetas = np.array([self.theta0])
+
         for i in range(pointID-1, len(self.trajectory_points)-1):
             traj_x, traj_y, theta = self.generate_trajectory( \
                 self.trajectory_points[i], self.thetas[i], self.trajectory_points[i+1])
@@ -55,7 +56,6 @@ class TrajectoryPlanner:
         #     return self.minimum_curvature(pos_0, orientation_0, pos_f)
         # elif method == 'constcurv':
         #     return self.constant_curvature(pos_0, orientation_0, pos_f)
-        print(self.relative_curvature(pos_0, orientation_0, pos_f))
         return self.constant_curvature(pos_0, orientation_0, pos_f)
         if self.relative_curvature(pos_0, orientation_0, pos_f) < 0.7:
             print("minimum curvature")
@@ -134,36 +134,42 @@ class TrajectoryPlanner:
         'pure geometry'
         x0 = pos_0[0]; y0 = pos_0[1]; theta0 = orientation_0
         xf = pos_f[0]; yf = pos_f[1]
-        
-        if x0 != xf:
-            k1 = (x0**2 + y0**2 - xf**2 - yf**2) / (2*(x0-xf))
-            k2 = (y0-yf) / (x0-xf)
 
         tg0 = tan(theta0)
 
         # special cases
-        if abs(tg0) > 100 and x0 == xf:
-            print("okomiti gradijent i x0 == xf")
-        if abs(tg0) > 100:
-            print("okomiti gradijent")
+        if abs(atan2(yf-y0, xf-x0) - theta0) < 1e-5:
+            print('colinear points')
+            x = np.linspace(x0, xf, self.N)
+            y = np.linspace(y0, yf, self.N)
+            return x, y, theta0
+        elif abs(atan2(yf-y0, xf-x0) + theta0) < 1e-5:
+            print("sjebo si nes")
+            return
+        
+        elif abs(theta0) > 1e9:
+            print("vertical gradient")
+            k1 = (x0**2 + y0**2 - xf**2 - yf**2) / (2*(x0-xf))
+            k2 = (y0-yf) / (x0-xf)
             cy = y0
             cx = k1 - k2*cy
         elif x0 == xf:
             print("x0 == xf")
             cy = (y0+yf) / 2
             cx = x0 - tg0*(cy-y0)
+            if abs( (cx-x0) / (cy-y0) + tg0) > 1e-5: # maybe unneccessary
+                print("wrong angle")
         else:
-            cy = (y0*tg0 + k1 - x0) / (k2 + tg0)
-            cx = k1 - k2*cy
-        
-        # wrong angle
-        if (cx-x0) / (cy-y0) != tg0 and x0 != xf:
+            k1 = (x0**2 + y0**2 - xf**2 - yf**2) / (2*(x0-xf))
+            k2 = (y0-yf) / (x0-xf)
             cy = (-y0*tg0 + k1 - x0) / (k2 - tg0)
             cx = k1 - k2*cy
-        elif x0 == xf:
-            print('mozda greska')
-            cy = (y0+yf) / 2
-            cx = x0 + tg0*(cy-y0)
+        
+            # wrong angle
+            if abs( (cx-x0) / (cy-y0) + tg0) > 1e-5:
+                print("wrong angle %f %f" %( (cx-x0) / (cy-y0), tg0))
+                cy = (y0*tg0 + k1 - x0) / (k2 + tg0)
+                cx = k1 - k2*cy
         
         R = sqrt((x0-cx)**2 + (y0-cy)**2)
 
@@ -174,7 +180,6 @@ class TrajectoryPlanner:
 
         D = np.array([[x0-cx, y0-cy], [cos(theta0), sin(theta0)]])
         deter = np.linalg.det(D)
-        # print(deter, D)
         if deter > 0:
             if alpha == pi:
                 alpha = -pi
@@ -193,8 +198,8 @@ class TrajectoryPlanner:
 
         x = cx + R*np.cos(u)
         y = cy + R*np.sin(u)
-        # print(pos_0, theta0)
-        return x, y, thetaf
+        
+        return x, y, self.angle_domain(thetaf)
 
     def relative_curvature(self, pos, theta, newPos):
         v1 = [cos(theta), sin(theta)]
@@ -205,6 +210,13 @@ class TrajectoryPlanner:
             return 1e9
         return sin_fi/cos_fi
 
+    def angle_domain(self, angle):
+        if angle > pi:
+            return angle - 2*pi
+        elif angle < -pi:
+            return angle + 2*pi
+        else:
+            return angle
 
     def get_last_trajectory_point(self):
         if len(self.trajectory_points) == 0:
