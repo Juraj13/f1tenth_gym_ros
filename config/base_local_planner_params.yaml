@@ -1,18 +1,14 @@
 controller_frequency: 5.0
 recovery_behaviour_enabled: true
 
-TebLocallannerROS:
-
-  footprint_model:
-    type: "polygon"
-    vertices: [[-0.1, -0.2], [-0.1, 0.2], [0.4, 0.2], [0.4, -0.2]]
+TebLocalPlannerROS:
   
   # Robot Configuration Parameters
-  max_vel_x: 20.0
-  max_vel_x_backwards: 20.0
+  max_vel_x: 2.0
+  max_vel_x_backwards: 2.0
   max_vel_theta: 3.2
   acc_lim_x: 9.51
-  acc_lim_theta: 3.2
+  acc_lim_theta: 10.0
   
   acc_lim_x: 9.51
   acc_lim_y: 0.0
@@ -20,7 +16,7 @@ TebLocallannerROS:
   acc_lim_th: 3.2
 
   holonomic_robot: false
-  sim_time: 3
+  sim_time: 2
 
   # Goal Tolerance Parameters
   xy_goal_tolerance: 0.2
@@ -29,3 +25,8 @@ TebLocallannerROS:
 
   meter_scoring: true
   free_goal_vel: true
+  
+  # Trajectory Parameters
+  
+  dt_ref: 0.2
+  dt_hysteresis: 0.02

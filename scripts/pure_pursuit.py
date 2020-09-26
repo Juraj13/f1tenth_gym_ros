@@ -108,10 +108,10 @@ class PurePursuit(object):
 		whereto = AckermannDriveStamped()
 		whereto.header.stamp = rospy.Time.now()
 		whereto.drive.steering_angle = self.delta
-		whereto.drive.steering_angle_velocity = 1
+		whereto.drive.steering_angle_velocity = 0
 		whereto.drive.speed = self.speed2
-		whereto.drive.acceleration = 1
-		whereto.drive.jerk = 1
+		whereto.drive.acceleration = 0
+		whereto.drive.jerk = 0
 		self.pub.publish(whereto)
 			
 		
