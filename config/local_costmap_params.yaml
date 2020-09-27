@@ -6,6 +6,8 @@ local_costmap:
   height: 5
   update_frequency: 5.0
   publish_frequency: 10.0
+  transform_tolerance: 0.1
+# footprint_padding: 0.1
 
 
   plugins:

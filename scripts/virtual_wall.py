@@ -85,13 +85,13 @@ class VirtualWall(object):
 		# Flag set to 1 if the map
 		self.flag = 1
 
-	def give_if_new_wall(self, i):
+	def give_if_new_wall(self, j):
 		"""Return True if robot is in the position for new wall to be generated"""
 
-		if i == 0:
-			return (self.robot_x >= self.wall_positions[i][0]) and self.corner1[1] >= self.robot_y >= self.corner2[1]
+		if j == 0:
+			return (self.robot_x >= self.wall_positions[j][0]) and self.corner1[1] >= self.robot_y >= self.corner2[1]
 		else:
-			return self.robot_x <= self.wall_positions[i][0] and self.corner1[1] >= self.robot_y >= self.corner2[1]
+			return self.robot_y <= self.wall_positions[j][1] and self.corner1[0] >= self.robot_x >= self.corner2[0]
 
 
 
@@ -103,11 +103,12 @@ class VirtualWall(object):
 		"""
 		# Initialization
 		self.flag = 0
+		self.domagoj_sux = 1
 		self.num_laps = 2
 		self.num_of_walls = 2
-		self.wall_positions = [[-0.1, 0], [5.14, -24.04]]
-		self.goal_positions = [[-0.2, 0], [5.30, -24.04]]
-		self.length = [4.1, 3.9]
+		self.wall_positions = [[-0.5, 0], [7.31, -10.41]] #5.14, -24.04
+		self.goal_positions = [[-2.5, 0], [7.31, -10.00]]
+		self.length = [4.1, 8]
 
 		# Create subscribers
 		rospy.Subscriber("/odom", Odometry,self.odometry_callback, queue_size = 1)
@@ -123,8 +124,12 @@ class VirtualWall(object):
 			for j in range (0, self.num_of_walls):
 
 				# Find wall corners
-				self.corner1 = [self.wall_positions[j][0], self.wall_positions[j][1]+self.length[j]/2]
-				self.corner2 = [self.wall_positions[j][0], self.wall_positions[j][1]-self.length[j]/2]
+				if j == 0:
+					self.corner1 = [self.wall_positions[j][0], self.wall_positions[j][1]+self.length[j]/2]
+					self.corner2 = [self.wall_positions[j][0], self.wall_positions[j][1]-self.length[j]/2]
+				if j == 1:
+					self.corner1 = [self.wall_positions[j][0]+self.length[j]/2, self.wall_positions[j][1]]
+					self.corner2 = [self.wall_positions[j][0]-self.length[j]/2, self.wall_positions[j][1]]
 
 				# Find wall corner pixels
 				corner1_pix = self.pose_to_pixel(self.corner1[0], self.corner1[1])
@@ -132,6 +137,7 @@ class VirtualWall(object):
 
 				# Check if robot has passed the wall
 				while not self.give_if_new_wall(j):
+
 					rospy.sleep(0.2)
 
 				self.build_wall(corner1_pix, corner2_pix)

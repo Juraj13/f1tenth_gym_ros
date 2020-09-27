@@ -4,8 +4,8 @@ recovery_behaviour_enabled: true
 TebLocalPlannerROS:
   
   # Robot Configuration Parameters
-  max_vel_x: 2.0
-  max_vel_x_backwards: 2.0
+  max_vel_x: 5.0
+  max_vel_x_backwards: 5.0
   max_vel_theta: 3.2
   acc_lim_x: 9.51
   acc_lim_theta: 10.0
@@ -16,7 +16,7 @@ TebLocalPlannerROS:
   acc_lim_th: 3.2
 
   holonomic_robot: false
-  sim_time: 2
+  sim_time: 3
 
   # Goal Tolerance Parameters
   xy_goal_tolerance: 0.2
@@ -30,3 +30,8 @@ TebLocalPlannerROS:
   
   dt_ref: 0.2
   dt_hysteresis: 0.02
+  
+  # Obstacles Paramaters
+  
+#inflation_dist: 1.0
+#min_obstacle_dist
