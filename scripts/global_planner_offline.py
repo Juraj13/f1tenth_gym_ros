@@ -53,23 +53,26 @@ def update():
     fig.canvas.draw_idle()
 
 
-def reset(event):
-    # global yvals
-    # global spline
-    # #reset the values
-    # yvals = func(x)
-    # for i in np.arange(N):
-    #   sliders[i].reset()
-    # spline = inter.InterpolatedUnivariateSpline (x, yvals)
-    # l.set_ydata(yvals)
-    # m.set_ydata(spline(X))
-    # redraw canvas while idle
-    fig.canvas.draw_idle()
+def done(event):
+    global trajectory_points
+    global trajectory_planner
+    xy = trajectory_points[0]
+    trajectory_planner.add_trajectory_point([xy[0], 600-xy[1]])
+    update()
+
+def save(event):
+    global trajectory_planner
+    trajectory = trajectory_planner.get_trajectory()
+    with open('trajectory.csv', 'w') as file:
+        for i in range(len(trajectory)):
+            file.write("%f, %f\n" % (trajectory[i][0], trajectory[i][1]))
+    print("Saved")
+
 
 def button_press_callback(event):
     'whenever a mouse button is pressed'
     global pind
-    if event.inaxes is None:
+    if event.inaxes is None or event.inaxes != axes:
         return
     if event.button != 1:
         return
@@ -144,9 +147,14 @@ if __name__ == '__main__':
 
     trajectory_planner = TrajectoryPlanner(np.empty((0,2)), 0, 100)
 
-    # axres = plt.axes([0.84, 0.8-((N)*0.05), 0.12, 0.02])
-    # bres = Button(axres, 'Reset')
-    # bres.on_clicked(reset)
+    axdon = plt.axes([0.84, 0.8-((10)*0.05), 0.12, 0.02])
+    bres = Button(axdon, 'Done')
+    bres.on_clicked(done)
+
+    axsav = plt.axes([0.84, 0.8-((8)*0.05), 0.12, 0.02])
+    bsav = Button(axsav, 'Save')
+    bsav.on_clicked(save)
+    
 
     fig.canvas.mpl_connect('button_press_event', button_press_callback)
     fig.canvas.mpl_connect('button_release_event', button_release_callback)
