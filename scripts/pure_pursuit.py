@@ -87,8 +87,8 @@ class PurePursuit(object):
 		mi = 0.523
 		g = 9.81
 		self.v = math.sqrt(mi*g*R)
-		if self.v > 5:
-			self.v = 5
+		if self.v > 10:
+			self.v = 10
 
 
 	def calculate_pure_pursuit(self):
@@ -98,10 +98,11 @@ class PurePursuit(object):
 		# look-ahead distance ld based on the speed of the vehicle
 		
 		# ld = self.coefficient * self.v + 0.5 # default: 1.0
-		ld = 1.0
+		ld = 1
 		diff_min = ld
 		pp = self.path_position
 		self.length2 = len(pp)
+		print "duljina:", self.length2
 		self.velocity_controller(pp)
 		
 		rob_x = self.robot_x
@@ -207,7 +208,7 @@ class PurePursuit(object):
 		self.transf = tf.TransformListener()
 		rospy.sleep(0.5) 
 
-		rate = rospy.Rate(100)
+		rate = rospy.Rate(5)
 		while not rospy.is_shutdown():
 			if self.flag == 1:
 				self.calculate_pure_pursuit()
