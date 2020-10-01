@@ -6,7 +6,7 @@ from nav_msgs.msg import Odometry, Path
 from ackermann_msgs.msg import AckermannDriveStamped
 from geometry_msgs.msg import PointStamped
 from dynamic_reconfigure.server import Server
-from f1tenth_gym_ros.cfg import RacecarConfig
+# from f1tenth_gym_ros.cfg import RacecarConfig
 
 
 
@@ -43,13 +43,14 @@ class PurePursuit(object):
 		diff_min = ld
 		length = len(self.path_position)
 
-		#find position(x,y) on the path that is ld away from the robot.
+		#find position(x,y) on the path that is ld away from the robot
+		# if self.trajectory_index == -1:
 		for i in range(0, length):
 			path_x = self.path_position[i][0]
 			path_y = self.path_position[i][1]
 			dist_rp = get_distance(self.robot_x, path_x, self.robot_y, path_y)
 			diff = abs(dist_rp - ld) 
-			if diff < diff_min:
+			if diff < diff_min and (path_x-self.robot_x)*math.cos(self.robot_theta) + (path_y-self.robot_y)*math.sin(self.robot_theta) > 0:
 				diff_min = diff
 				self.goal_x = path_x
 				self.goal_y = path_y
@@ -124,20 +125,26 @@ class PurePursuit(object):
 		self.robot_qua_y = data.pose.pose.orientation.y
 		self.robot_qua_z = data.pose.pose.orientation.z
 		self.robot_qua_w = data.pose.pose.orientation.w
+		self.robot_theta = 2*math.atan2(self.robot_qua_z, self.robot_qua_w)
 
 
 	def __init__(self):
 		"""Create subscribers, publishers and servers."""
 
-		srv = Server(RacecarConfig, self.config_callback)
+		# srv = Server(RacecarConfig, self.config_callback)
 		rospy.Subscriber("/odom", Odometry, self.odometry_callback, queue_size = 1)
-		rospy.sleep(0.5) 
-		rospy.Subscriber("/move_base/TebLocalPlannerROS/local_plan", Path, self.planner_callback, queue_size = 1)
-		rospy.sleep(0.5) 
+		# rospy.sleep(0.5) 
+		rospy.Subscriber("/global_traj", Path, self.planner_callback, queue_size = 1)
+		# rospy.sleep(0.5) 
 		self.pub = rospy.Publisher("/drive", AckermannDriveStamped, queue_size = 1)
-		rospy.sleep(0.5) 
+		# rospy.sleep(0.5) 
 		self.pub2 = rospy.Publisher("/pure_pursit_goal", PointStamped, queue_size = 1)
-		rospy.sleep(0.5) 
+		rospy.sleep(0.6) 
+
+		self.speed = 7
+		self.coefficient = 0.25
+		self.decelerate_dist = 3.0
+		self.trajectory_index = -1
 
 		rate = rospy.Rate(50)
 		while not rospy.is_shutdown():
