@@ -4,12 +4,12 @@ import math
 import numpy
 import tf
 from scipy import optimize
+
 from nav_msgs.msg import Odometry, Path
 from ackermann_msgs.msg import AckermannDriveStamped
-from geometry_msgs.msg import PointStamped, Twist
-from geometry_msgs.msg import PoseStamped
-from dynamic_reconfigure.server import Server
+from geometry_msgs.msg import PointStamped, Twist, PoseStamped
 from f1tenth_gym_ros.cfg import RacecarConfig
+from f1tenth_gym_ros.msg import RaceInfo
 
 
 
@@ -75,15 +75,7 @@ class PurePursuit(object):
 		angle = numpy.arccos(dot_product)
 		angle = angle*180.0/math.pi
 		
-		# ovo je neki moj pokusaj P regulatora na temelju kuta
-		#if angle < 5.0:
-		#	self.v = 5.0
-		#elif angle > 180.0:
-		#	self.v = 2.0
-		#else:
-		#	self.v = (-3.0/175.0)*angle+(178.0/35.0)
-		
-		# ovaj dio je cista fizika
+		# max speed based on physics
 		mi = 0.523
 		g = 9.81
 		self.v = math.sqrt(mi*g*R)
@@ -94,9 +86,8 @@ class PurePursuit(object):
 	def calculate_pure_pursuit(self):
 
 		L = 0.3302
-		# self.speed2 = self.speed # default: 2.0
-		# look-ahead distance ld based on the speed of the vehicle
 		
+		# look-ahead distance ld based on the speed of the vehicle
 		# ld = self.coefficient * self.v + 0.5 # default: 1.0
 		ld = 1.0
 		diff_min = ld
@@ -155,16 +146,6 @@ class PurePursuit(object):
 		whereto.drive.acceleration = 0
 		whereto.drive.jerk = 0
 		self.pub.publish(whereto)
-		
-
-	def config_callback(self, config, level):
-		"""Get configuration parameters from rqt_recongifure"""
-
-		rospy.loginfo("""Reconfiugre Request: {speed}, {coefficient}""".format(**config))
-#		self.speed = config.speed
-		self.coefficient = config.coefficient
-		self.decelerate_dist = config.decelerate_dist
-		return config
 
 
 	def planner_callback(self, data):
@@ -190,24 +171,42 @@ class PurePursuit(object):
 		self.robot_qua_y = data.pose.pose.orientation.y
 		self.robot_qua_z = data.pose.pose.orientation.z
 		self.robot_qua_w = data.pose.pose.orientation.w
+	
+	def race_info_callback(self, data):
+		self.lap_count = data.ego_lap_count
+		if (self.flag2 == 1) and (self.lap_count == 1):
+			goal = PoseStamped()
+			goal.header.stamp = rospy.Time.now()
+			goal.header.frame_id = "map"
+			goal.pose.orientation.w = 1.0
+			self.pub3.publish(goal)
+			self.flag2 = 0
+			
 
 
 	def __init__(self):
 		"""Create subscribers, publishers and servers."""
 		self.flag = 0
+		self.flag2 = 1
 
-		srv = Server(RacecarConfig, self.config_callback)
 		rospy.Subscriber("/odom", Odometry, self.odometry_callback, queue_size = 1)
-		rospy.sleep(0.5) 
 		rospy.Subscriber("/move_base/TebLocalPlannerROS/local_plan", Path, self.planner_callback, queue_size = 1)
-		rospy.sleep(0.5)
+		rospy.Subscriber("/race_info", RaceInfo, self.race_info_callback, queue_size = 1)
+		
 		self.pub = rospy.Publisher("/drive", AckermannDriveStamped, queue_size = 1)
-		rospy.sleep(0.5) 
 		self.pub2 = rospy.Publisher("/pure_pursit_goal", PointStamped, queue_size = 1)
+		self.pub3 = rospy.Publisher("/move_base_simple/goal", PoseStamped, queue_size = 1)
 		self.transf = tf.TransformListener()
-		rospy.sleep(0.5) 
-
-		rate = rospy.Rate(100)
+		rospy.sleep(1.0) 
+		rate = rospy.Rate(10)
+		
+		# publish goal
+		goal = PoseStamped()
+		goal.header.stamp = rospy.Time.now()
+		goal.header.frame_id = "map"
+		goal.pose.orientation.w = 1.0
+		self.pub3.publish(goal)
+		
 		while not rospy.is_shutdown():
 			if self.flag == 1:
 				self.calculate_pure_pursuit()
