@@ -55,6 +55,7 @@ class PurePursuit(object):
 		p1.pose.position.y = path_y
 		return self.transf.transformPose("ego_racecar/base_link", p1)
 	
+	# uzima sve tocke ---- sranje
 	def velocity_controller(self, pp):
 		c_est = 0.0, -10.0 # somewhere in the middle of the map
 		x = [p[0] for p in pp]
@@ -93,7 +94,7 @@ class PurePursuit(object):
 
 	def calculate_pure_pursuit(self):
 
-		L = 0.3302
+		L = 0.3302 # ?
 		# self.speed2 = self.speed # default: 2.0
 		# look-ahead distance ld based on the speed of the vehicle
 		
