@@ -126,7 +126,7 @@ class SpeedVsCurvatureExperiment(object):
             self.simend_y = self.odom.pose.pose.position.y
             self.publish_paths()
             self.paths_published = True
-            print("Simulation ended at %f" % (rospy.Time.now()-start).to_sec())
+            print("Simulation ended at %f" % self.time)
 
         acker = AckermannDriveStamped()
         acker.header.stamp = rospy.Time.now()
