@@ -8,8 +8,12 @@ Panels:
         - /Status1
         - /Path1
         - /Path2
+<<<<<<< HEAD
         - /Path4
         - /Path5
+=======
+        - /Path3
+>>>>>>> 2f0ab95ef5be9a9eb29794767325a6aca5e2a2af
       Splitter Ratio: 0.5
     Tree Height: 699
   - Class: rviz/Selection
@@ -293,6 +297,7 @@ Visualization Manager:
       Topic: /global_traj
       Unreliable: false
       Value: true
+<<<<<<< HEAD
     - Alpha: 1
       Buffer Length: 1
       Class: rviz/Path
@@ -339,6 +344,8 @@ Visualization Manager:
       Topic: /trajectory
       Unreliable: false
       Value: true
+=======
+>>>>>>> 2f0ab95ef5be9a9eb29794767325a6aca5e2a2af
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
