@@ -10,9 +10,9 @@ TebLocalPlannerROS:
   acc_lim_x: 9.51
   acc_lim_theta: 10.0
   weight_kinematics_forward_drive: 1000
-  
+  wheelbase: 0.3302
   acc_lim_x: 9.51
-  acc_lim_y: 0.0
+  acc_lim_y: 9.51
   acc_lim_trans: 9.51
   acc_lim_th: 3.2
 
@@ -35,7 +35,7 @@ TebLocalPlannerROS:
   feasibility_check_no_poses: 16
   max_global_plan_lookahead_dist: 10
   min_obstacle_dist: 0.2
-  weight_max_vel_x: 1000
+  weight_max_vel_x: 100
   weight_acc_lim_x: 2
 
   
