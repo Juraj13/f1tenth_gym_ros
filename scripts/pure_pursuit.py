@@ -152,7 +152,7 @@ class PurePursuit(object):
 		whereto.header.stamp = rospy.Time.now()
 		whereto.drive.steering_angle = self.delta
 		whereto.drive.steering_angle_velocity = 0
-		whereto.drive.speed = self.v
+		whereto.drive.speed = self.speed
 		whereto.drive.acceleration = 0
 		whereto.drive.jerk = 0
 		self.pub.publish(whereto)
@@ -192,6 +192,9 @@ class PurePursuit(object):
 		self.robot_qua_z = data.pose.pose.orientation.z
 		self.robot_qua_w = data.pose.pose.orientation.w
 
+	def cmd_callback (self, data):
+		self.speed = data.linear.x
+
 
 	def __init__(self):
 		"""Create subscribers, publishers and servers."""
@@ -199,6 +202,8 @@ class PurePursuit(object):
 
 		srv = Server(RacecarConfig, self.config_callback)
 		rospy.Subscriber("/odom", Odometry, self.odometry_callback, queue_size = 1)
+		rospy.sleep(0.5) 
+		rospy.Subscriber("/cmd_vel", Twist, self.cmd_callback, queue_size = 1)
 		rospy.sleep(0.5) 
 		rospy.Subscriber("/move_base/TebLocalPlannerROS/local_plan", Path, self.planner_callback, queue_size = 1)
 		rospy.sleep(0.5)
