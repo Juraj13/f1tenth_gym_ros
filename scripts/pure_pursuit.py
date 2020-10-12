@@ -10,6 +10,8 @@ from geometry_msgs.msg import PointStamped, Twist
 from geometry_msgs.msg import PoseStamped
 from dynamic_reconfigure.server import Server
 from f1tenth_gym_ros.cfg import RacecarConfig
+from scipy.interpolate import interp1d
+import matplotlib.pyplot as plt
 
 
 
@@ -54,27 +56,52 @@ class PurePursuit(object):
 		p1.pose.position.x = path_x
 		p1.pose.position.y = path_y
 		return self.transf.transformPose("ego_racecar/base_link", p1)
-	
+
+	def check_yourself(self):
+
+		if ((get_distance(self.robot_x, self.robot_y, self.turning_points[self.cnt], self.turning_points[self.cnt+1]) <= self.circle_of_life[self.count_dooke]) and self.zastavica == 1 and self.mode%2 == 0):
+			print "uso1"
+			self.mode += 1
+			self.zastavica = 0
+		elif ((get_distance(self.robot_x, self.robot_y, self.turning_points[self.cnt], self.turning_points[self.cnt+1]) >= self.circle_of_life[self.count_dooke]) and (self.zastavica == 0)):
+			print "uso3"
+			self.zastavica = 1
+			self.cnt += 2
+			self.mode += 1
+			self.count_dooke += 1
+			if self.count_dooke == 3:
+				self.count_dooke = 0
+			if self.cnt == 6:
+				self.cnt = 0
+
 	def velocity_controller(self, pp):
-		c_est = 0.0, -10.0 # somewhere in the middle of the map
-		x = [p[0] for p in pp]
-		y = [p[1] for p in pp]
+		# c_est = 0.0, -10.0 # somewhere in the middle of the map
+		# x = [p[0] for p in pp]
+		# y = [p[1] for p in pp]
+		# #plt.plot(x, y)
+		# #plt.show()
+		# center, ier = optimize.leastsq(circle_func, c_est, args=(x,y))
+		# xc, yc = center # fitted circle center
+		# Ri = get_distance(x, y, *center)
+		# R = Ri.mean() # fitted circle radius
 		
-		center, ier = optimize.leastsq(circle_func, c_est, args=(x,y))
-		xc, yc = center # fitted circle center
-		Ri = get_distance(x, y, *center)
-		R = Ri.mean() # fitted circle radius
+		# # calculate angle between first and last point on local path
+		# first_point = pp[0]-center
+		# first_point = first_point/numpy.linalg.norm(first_point)
+		# last_point = pp[-1]-center
+		# last_point = last_point/numpy.linalg.norm(last_point)
 		
-		# calculate angle between first and last point on local path
-		first_point = pp[0]-center
-		first_point = first_point/numpy.linalg.norm(first_point)
-		last_point = pp[-1]-center
-		last_point = last_point/numpy.linalg.norm(last_point)
+		# dot_product = numpy.dot(last_point,first_point)
+		# angle = numpy.arccos(dot_product)
+		# angle = angle*180.0/math.pi
 		
-		dot_product = numpy.dot(last_point,first_point)
-		angle = numpy.arccos(dot_product)
-		angle = angle*180.0/math.pi
+
+		self.check_yourself()
 		
+		if (self.mode % 2) == 1:
+			self.v = 3.2
+		elif(self.mode % 2) == 0:
+			self.v = 7.5
 		# ovo je neki moj pokusaj P regulatora na temelju kuta
 		#if angle < 5.0:
 		#	self.v = 5.0
@@ -84,11 +111,11 @@ class PurePursuit(object):
 		#	self.v = (-3.0/175.0)*angle+(178.0/35.0)
 		
 		# ovaj dio je cista fizika
-		mi = 0.523
-		g = 9.81
-		self.v = math.sqrt(mi*g*R)
-		if self.v > 10:
-			self.v = 10
+		# mi = 0.523
+		# g = 9.81
+		# self.v = math.sqrt(mi*g*R)
+		# if self.v > 7:
+		# 	self.v = 7
 
 
 	def calculate_pure_pursuit(self):
@@ -102,7 +129,10 @@ class PurePursuit(object):
 		diff_min = ld
 		pp = self.path_position
 		self.length2 = len(pp)
-		print "duljina:", self.length2
+		while self.length2 == 0: 
+			pp = self.path_position
+			self.length2 = len(pp)
+		#print "duljina:", self.length2
 		self.velocity_controller(pp)
 		
 		rob_x = self.robot_x
@@ -111,6 +141,7 @@ class PurePursuit(object):
 		rob_qua_y = self.robot_qua_y
 		rob_qua_z = self.robot_qua_z
 		rob_qua_w = self.robot_qua_w
+
 
 		# find position(x,y) on the path that is ld away from the robot.
 		for i in range(0, self.length2):
@@ -152,7 +183,7 @@ class PurePursuit(object):
 		whereto.header.stamp = rospy.Time.now()
 		whereto.drive.steering_angle = self.delta
 		whereto.drive.steering_angle_velocity = 0
-		whereto.drive.speed = self.speed
+		whereto.drive.speed = self.v
 		whereto.drive.acceleration = 0
 		whereto.drive.jerk = 0
 		self.pub.publish(whereto)
@@ -175,10 +206,26 @@ class PurePursuit(object):
 		"""
 		
 		self.path_position = []
+		pom_lista = []
 		self.length = len(data.poses)
-
 		for i in range(0, self.length):
-			self.path_position.append([data.poses[i].pose.position.x, data.poses[i].pose.position.y])
+			pom_lista.append([data.poses[i].pose.position.x, data.poses[i].pose.position.y])
+		x = [p[0] for p in pom_lista]
+		y = [p[1] for p in pom_lista]
+
+		f1 = interp1d(x, y)
+		xnew = numpy.linspace(x[0],x[-1], num=50, endpoint=True)
+		x = xnew
+		y = f1(xnew)
+
+   		self.path_position = zip(x,y)
+		#pp = self.path_position
+		#x = [p[0] for p in pp]
+		#y = [p[1] for p in pp]
+		#plt.plot(x,y)
+		#plt.show()
+
+		#print "pozicija: ", self.path_position
 		self.flag = 1
 
 
@@ -198,22 +245,24 @@ class PurePursuit(object):
 
 	def __init__(self):
 		"""Create subscribers, publishers and servers."""
+		self.circle_of_life = numpy.array([4.5, 4.0, 2.0])
+		self.count_dooke = 0
 		self.flag = 0
-
+		self.zastavica = 1
+		self.mode = 0
+		self.cnt = 0
+		self.turning_points = numpy.array([7.43, -22.68, 0.33, -5.99, -4.61, -5.08])
 		srv = Server(RacecarConfig, self.config_callback)
 		rospy.Subscriber("/odom", Odometry, self.odometry_callback, queue_size = 1)
-		rospy.sleep(0.5) 
 		rospy.Subscriber("/cmd_vel", Twist, self.cmd_callback, queue_size = 1)
-		rospy.sleep(0.5) 
 		rospy.Subscriber("/move_base/TebLocalPlannerROS/local_plan", Path, self.planner_callback, queue_size = 1)
-		rospy.sleep(0.5)
 		self.pub = rospy.Publisher("/drive", AckermannDriveStamped, queue_size = 1)
 		rospy.sleep(0.5) 
 		self.pub2 = rospy.Publisher("/pure_pursit_goal", PointStamped, queue_size = 1)
 		self.transf = tf.TransformListener()
 		rospy.sleep(0.5) 
 
-		rate = rospy.Rate(5)
+		rate = rospy.Rate(100)
 		while not rospy.is_shutdown():
 			if self.flag == 1:
 				self.calculate_pure_pursuit()

@@ -3,7 +3,7 @@ footprint_padding: 0.01
 
 robot_base_frame: ego_racecar/base_link
 #transform_tolerance: 0.5
-resolution: 0.12
+resolution: 0.2
 
 obstacle_range: 5.5
 raytrace_range: 6.0

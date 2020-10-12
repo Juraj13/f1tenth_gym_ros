@@ -4,7 +4,7 @@ recovery_behaviour_enabled: true
 TebLocalPlannerROS:
   
   # Robot Configuration Parameters
-  max_vel_x: 20.0
+  max_vel_x: 7.0
   max_vel_x_backwards: 1.0
   max_vel_theta: 3.2
   acc_lim_x: 9.51
@@ -29,14 +29,14 @@ TebLocalPlannerROS:
   
   # Trajectory Parameters
   
-  dt_ref: 0.1
-  dt_hysteresis: 0.01
-  min_samples: 10
-  feasibility_check_no_poses: 16
-  max_global_plan_lookahead_dist: 10
+  dt_ref: 0.3
+  dt_hysteresis: 0.03
+  #min_samples: 9.0
+  #feasibility_check_no_poses: 11.0
+  #max_global_plan_lookahead_dist: 0.0
   min_obstacle_dist: 0.2
-  weight_max_vel_x: 100
-  weight_acc_lim_x: 2
+  #weight_max_vel_x: 100.0
+  #weight_acc_lim_*: 10.0
 
   
   # Obstacles Paramaters
