@@ -99,9 +99,9 @@ class PurePursuit(object):
 		self.check_yourself()
 		
 		if (self.mode % 2) == 1:
-			self.v = 3.2
+			self.v = 3.7
 		elif(self.mode % 2) == 0:
-			self.v = 7.5
+			self.v = 5.5
 		# ovo je neki moj pokusaj P regulatora na temelju kuta
 		#if angle < 5.0:
 		#	self.v = 5.0
@@ -125,7 +125,7 @@ class PurePursuit(object):
 		# look-ahead distance ld based on the speed of the vehicle
 		
 		# ld = self.coefficient * self.v + 0.5 # default: 1.0
-		ld = 1
+		ld = self.v*0.15+0.1
 		diff_min = ld
 		pp = self.path_position
 		self.length2 = len(pp)
@@ -245,13 +245,14 @@ class PurePursuit(object):
 
 	def __init__(self):
 		"""Create subscribers, publishers and servers."""
-		self.circle_of_life = numpy.array([4.5, 4.0, 2.0])
+		self.circle_of_life = numpy.array([2.5, 2.5, 13, 2.5])
 		self.count_dooke = 0
 		self.flag = 0
 		self.zastavica = 1
 		self.mode = 0
 		self.cnt = 0
-		self.turning_points = numpy.array([7.43, -22.68, 0.33, -5.99, -4.61, -5.08])
+		self.v = 0
+		self.turning_points = numpy.array([48.96, -24.709, 135.934, 79.801, 43.54, 33.048, -7.844, 8.862])
 		srv = Server(RacecarConfig, self.config_callback)
 		rospy.Subscriber("/odom", Odometry, self.odometry_callback, queue_size = 1)
 		rospy.Subscriber("/cmd_vel", Twist, self.cmd_callback, queue_size = 1)

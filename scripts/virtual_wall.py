@@ -38,6 +38,8 @@ class VirtualWall(object):
 		self.map_origin = data.info.origin.position
 		self.mapload_time = data.info.map_load_time
 		self.map_data = data.data
+		print "map_height: ", self.map_height, "  map_width: ", self.map_width, " map_resolution: ", self.map_resolution, "\n"
+		print "map_origin_x: ", self.map_origin.x, " map_origin_y: ", self.map_origin.y
 
 		# Reshape the map to 2D array.
 		self.map = np.array(self.map_data).reshape(self.map_width, self.map_height)
@@ -52,46 +54,49 @@ class VirtualWall(object):
 		return [pix_x, pix_y]
 
 
-	def build_wall(self, corner1_pix, corner2_pix):
-		"""Build imaginary wall defined by two pixels (corner1_pix, corner2_pix)"""
 
-		# Define new map same as the one form /map topic
-		new_map = OccupancyGrid()
-		new_map.header.stamp = rospy.Time.now()
-		new_map.info.width = self.map_width
-		new_map.info.height = self.map_height
-		new_map.info.resolution = self.map_resolution
-		new_map.info.origin.position = self.map_origin
-		new_map.info.map_load_time = self.mapload_time
-		new_map_array = np.array(self.map_data).reshape(self.map_width, self.map_height)
+	def create_new_map(self, i):
+		"""Create new map for every new wall. This function is called in initialization."""
 
-		# Generate a line through two pixels. Get row, column and value (0-1) od each pixel in the line.
+		#Get wall corners positions(x,y)
+		if i == 2: #not using 2 currently
+			corner1_0 = [self.wall_positions[i][0], self.wall_positions[i][1]+self.length[i]/2]
+			corner2_0 = [self.wall_positions[i][0], self.wall_positions[i][1]-self.length[i]/2]
+		else:
+			corner1_0 = [self.wall_positions[i][0]+self.length[i]/2, self.wall_positions[i][1]]
+			corner2_0 = [self.wall_positions[i][0]-self.length[i]/2, self.wall_positions[i][1]]
+
+		self.corner1.append(corner1_0)
+		self.corner2.append(corner2_0)
+
+		# Get pixel(x,y) of two wall corners.
+		corner1_pix = self.pose_to_pixel(self.corner1[i][0], self.corner1[i][1])
+		corner2_pix =self.pose_to_pixel(self.corner2[i][0], self.corner2[i][1])
+
+		# Generate line in between two wall corners.
 		rr, cc, val = line_aa(corner1_pix[0], corner1_pix[1], corner2_pix[0], corner2_pix[1])
 
-		# Scale the pixel values to range 0-100.
+		# Add wall to new map.
+		new_map_array = np.array(self.map_data).reshape(self.map_height, self.map_width)
 		new_map_array[cc, rr] = val * 100
 
-		# Change every pixels value to int and reshape map to list.
+		# Make sure every element in new map in integer value.
 		new_map_array_int = []
-		for i in range(0,self.map_width):
-			for j in range(0,self.map_height):
+		for i in range(0,self.map_height):
+			for j in range(0,self.map_width):
 				new_map_array_int.append(new_map_array[i][j].item())
 
-		# Make new map a tuple and publish it
-		reshape_tuple = tuple(new_map_array_int)
-		new_map.data = reshape_tuple
-		self.pub.publish(new_map)
+		# Make new map a tuple.
+		self.reshape_tuple_map.append(tuple(new_map_array_int))
 
-		# Flag set to 1 if the map
-		self.flag = 1
 
-	def give_if_new_wall(self, j):
-		"""Return True if robot is in the position for new wall to be generated"""
+	def give_if_new_wall(self, j, corner1, corner2):
+		"""Return True if robot is in the position for new wall to be generated."""
 
-		if j == 0:
-			return (self.robot_x >= self.wall_positions[j][0]) and self.corner1[1] >= self.robot_y >= self.corner2[1]
+		if j == 2: #not using 2 currently
+			return (self.robot_x <= self.wall_positions[j][0]) and corner1[1] >= self.robot_y >= corner2[1]
 		else:
-			return self.robot_y <= self.wall_positions[j][1] and self.corner1[0] >= self.robot_x >= self.corner2[0]
+			return (self.wall_positions[j][1]  >= self.robot_y >= self.wall_positions[j][1] - 3) and corner1[0] >= self.robot_x >= corner2[0]
 
 
 
@@ -99,70 +104,73 @@ class VirtualWall(object):
 		"""
 		Create subscribers, publishers.
 		Follow robot position, build walls and give goal position to global planner.
-		
+
 		"""
-		# Initialization
+
+		# Initialization.
 		self.flag = 0
-		self.domagoj_sux = 1
 		self.num_laps = 2
 		self.num_of_walls = 2
-		self.wall_positions = [[-0.5, 0], [7.31, -10.41]] #5.14, -24.04
-		self.goal_positions = [[-2.5, 0], [7.31, -10.00]]
-		self.length = [4.1, 8]
+		self.wall_positions = [[-0.9, 2.037], [35.919, 30.911]] #5.14, -24.04
+		self.goal_positions = [[41.355, 10.498], [51.76, -25.96]]
+		self.length = [9.7, 6]
+		self.reshape_tuple_map = []
+		self.corner1 = []
+		self.corner2 = []
 
-		# Create subscribers
+
+		# Create subscribers.
 		rospy.Subscriber("/odom", Odometry,self.odometry_callback, queue_size = 1)
 		rospy.Subscriber("/map", OccupancyGrid, self.map_callback, queue_size = 1)
 		rospy.sleep(0.5)
 
-		# Create publishers
+		# Create publishers.
 		self.pub = rospy.Publisher("/map2",OccupancyGrid, queue_size = 1)
 		self.pub2 = rospy.Publisher("/move_base_simple/goal", PoseStamped, queue_size = 1)
 		rospy.sleep(0.5)
 
+		# Initialize new map.
+		new_map = OccupancyGrid()
+		new_map.header.stamp = rospy.Time.now()
+		new_map.info.width = self.map_width
+		new_map.info.height = self.map_height
+		new_map.info.resolution = self.map_resolution
+		new_map.info.origin.position = self.map_origin
+		new_map.info.map_load_time = self.mapload_time
+
+		# Create a map for every wall used in this race.
+		for i in range(0, self.num_of_walls):
+			self.create_new_map(i)
+
 		for i in range(0, self.num_laps):
 			for j in range (0, self.num_of_walls):
 
-				# Find wall corners
-				if j == 0:
-					self.corner1 = [self.wall_positions[j][0], self.wall_positions[j][1]+self.length[j]/2]
-					self.corner2 = [self.wall_positions[j][0], self.wall_positions[j][1]-self.length[j]/2]
-				if j == 1:
-					self.corner1 = [self.wall_positions[j][0]+self.length[j]/2, self.wall_positions[j][1]]
-					self.corner2 = [self.wall_positions[j][0]-self.length[j]/2, self.wall_positions[j][1]]
+				# Wait for robot to pass new wall position.
+		 		while not self.give_if_new_wall(j, self.corner1[j], self.corner2[j]):
+		 			rospy.sleep(0.01)
 
-				# Find wall corner pixels
-				corner1_pix = self.pose_to_pixel(self.corner1[0], self.corner1[1])
-				corner2_pix =self.pose_to_pixel(self.corner2[0], self.corner2[1])
+		 		# Publish map with new wall.
+		 		new_map.header.stamp = rospy.Time.now()
+		 		new_map.data = self.reshape_tuple_map[j]
+		 		self.pub.publish(new_map)
 
-				# Check if robot has passed the wall
-				while not self.give_if_new_wall(j):
-
-					rospy.sleep(0.2)
-
-				self.build_wall(corner1_pix, corner2_pix)
-
-				# Wait for map to be published
-				while not self.flag == 1:
-					rospy.sleep(0.2)
-
-				self.flag = 0
-
-				# Define and publish goal pose for global planner
-				goal_pub = PoseStamped()
-				goal_pub.header.stamp = rospy.Time.now()
-				goal_pub.header.frame_id = "map"
-				goal_pub.pose.position.x = self.goal_positions[j][0]
-				goal_pub.pose.position.y = self.goal_positions[j][1]
-				goal_pub.pose.position.z = 0
-				goal_pub.pose.orientation.x = 0
+		 		# Define and publish goal pose for global planner.
+		 		goal_pub = PoseStamped()
+		 		goal_pub.header.stamp = rospy.Time.now()
+		 		goal_pub.header.frame_id = "map"
+		 		goal_pub.pose.position.x = self.goal_positions[j][0]
+		 		goal_pub.pose.position.y = self.goal_positions[j][1]
+		 		goal_pub.pose.position.z = 0
+		 		goal_pub.pose.orientation.x = 0
 				goal_pub.pose.orientation.y = 0
-				goal_pub.pose.orientation.z = 0
-				goal_pub.pose.orientation.w = 1
-				rospy.sleep(0.2)
-				self.pub2.publish(goal_pub)
+		 		goal_pub.pose.orientation.z = 0
+		 		goal_pub.pose.orientation.w = 1
+		 		rospy.sleep(0.1)
+		 		self.pub2.publish(goal_pub)
 
 		rospy.spin()
+
+
 
 
 if __name__ == "__main__":

@@ -29,12 +29,12 @@ TebLocalPlannerROS:
   
   # Trajectory Parameters
   
-  dt_ref: 0.3
-  dt_hysteresis: 0.03
+  dt_ref: 0.7
+  dt_hysteresis: 0.07
   #min_samples: 9.0
-  #feasibility_check_no_poses: 11.0
+  feasibility_check_no_poses: 4
   #max_global_plan_lookahead_dist: 0.0
-  min_obstacle_dist: 0.2
+  min_obstacle_dist: 0.5
   #weight_max_vel_x: 100.0
   #weight_acc_lim_*: 10.0
 

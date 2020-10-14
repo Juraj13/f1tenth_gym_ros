@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <launch>
 
-<arg name="node_start_delay" default="2.0" />
+<arg name="node_start_delay" default="5.0" />
 <arg name="node_start_delay2" default="6.0" />
 <node pkg="f1tenth_gym_ros" type="virtual_wall.py" name="virtual_wall_node" launch-prefix="bash -c 'sleep $(arg node_start_delay); $0 $@' " output="screen"/>
 
