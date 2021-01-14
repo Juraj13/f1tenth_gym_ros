@@ -37,7 +37,7 @@ class GlobalRun(object):
 		 [-0.9, -5.2, 0.85, 0.53],\
 		 [-4.4, -5.3, 0.95, 0.28],\
 		 [0, 0, 0, 1]]
-		rospy.Subscriber("/odom", Odometry, self.odometry_callback, queue_size = 1)
+		rospy.Subscriber("fer_rari/odom", Odometry, self.odometry_callback, queue_size = 1)
 		rospy.sleep(0.5) 
 		self.pub = rospy.Publisher("/move_base_simple/goal", PoseStamped, queue_size = 1)
 		rospy.sleep(0.5) 

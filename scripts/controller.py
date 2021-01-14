@@ -19,13 +19,13 @@ class Controller(object):
 		command = AckermannDriveStamped()
 		command.header.stamp = rospy.Time.now()
 		command.drive.steering_angle = self.convert_trans_rot_vel_to_steering_angle(self.v, self.w, 0.3302)
-		command.drive.speed = 2
+		command.drive.speed = self.v
 
 		self.pub.publish(command)
 
 
 	def cmd_callback(self, msg):
-		self.v = msg.linear.x
+		self.v = msg.linear.x/2
 		self.w = msg.angular.z
 
 
@@ -39,7 +39,7 @@ class Controller(object):
 		self.pub = rospy.Publisher("/drive", AckermannDriveStamped, queue_size = 1)
 		rospy.sleep(0.5) 
 
-		rate = rospy.Rate(50)
+		rate = rospy.Rate(100)
 		while not rospy.is_shutdown():
 			self.control()
 			rate.sleep()

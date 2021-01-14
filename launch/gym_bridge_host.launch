@@ -4,7 +4,7 @@
 
 
   <!-- Launch Rviz -->
-  <node pkg="rviz" type="rviz" name="rviz" args="-d $(find f1tenth_gym_ros)/launch/gym_bridge.rviz" output="screen"/>
+  <node pkg="rviz" type="rviz" name="rviz" args="-d $(find fer_rari)/launch/gym_bridge.rviz" output="screen"/>
 
 
   </launch>

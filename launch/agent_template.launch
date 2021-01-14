@@ -1,29 +1,42 @@
 <?xml version="1.0"?>
 <launch>
-  
-<include file="$(find f1tenth_gym_ros)/launch/gym_bridge_host.launch"/>
 
-<!--<node pkg="f1tenth_gym_ros" type="dummy_agent_node.py" name="dummy_agent" output="screen"/>-->
+<arg name="node_start_delay" default="5.0" />
+<arg name="node_start_delay2" default="7.0" />
+<arg name="node_start_delay3" default="6.0" />
+<node pkg="fer_rari" type="virtual_wall.py" name="virtual_wall_node" launch-prefix="bash -c 'sleep $(arg node_start_delay); $0 $@' " output="screen"/>
+<node pkg="fer_rari" type="map_type.py" name="map_type_node" launch-prefix="bash -c 'sleep $(arg node_start_delay2); $0 $@' " output="screen"/>
 
+<node pkg="fer_rari" type="pure_pursuit.py" name="pure_pursuit_node" launch-prefix="bash -c 'sleep $(arg node_start_delay3); $0 $@' " output="screen"/>
+
+<include file="$(find fer_rari)/launch/gym_bridge_host.launch"/>
+<remap from="map" to="map2"/>
+
+
+<!--<node pkg="fer_rari" type="dummy_agent_node.py" name="dummy_agent" output="screen"/>-->
   <!-- Launch local and global planner -->
   <arg name="base_global_planner" default="global_planner/GlobalPlanner"/>
   <arg name="base_local_planner" default="teb_local_planner/TebLocalPlannerROS" />
+  <arg name="recovery_behavior_enabled" default="false" />
+  <arg name="controller_frequency" default="100.0" />
+
   <!--<arg name="base_local_planner" value="base_local_planner/TrajectoryPlannerROS" />-->
 
 <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
     <param name="base_global_planner" value="$(arg base_global_planner)"/>
     <param name="base_local_planner" value="$(arg base_local_planner)"/>
-    <param name="GlobalPlanner/use_dijkstra" value="true"/>    <rosparam file="$(find f1tenth_gym_ros)/config/costmap_common_params.yaml" command="load" ns="global_costmap" />
-  <rosparam file="$(find f1tenth_gym_ros)/config/costmap_common_params.yaml" command="load" ns="local_costmap" />
-  <rosparam file="$(find f1tenth_gym_ros)/config/local_costmap_params.yaml" command="load" />
-  <rosparam file="$(find f1tenth_gym_ros)/config/global_costmap_params.yaml" command="load" />
-  <rosparam file="$(find f1tenth_gym_ros)/config/base_local_planner_params.yaml" command="load" />
+    <param name="recovery_behavior_enabled" value="$(arg recovery_behavior_enabled)"/>
+    <param name="GlobalPlanner/use_dijkstra" value="true"/>  
+    <param name="controller_frequency" value = "100.0" />    
+  <rosparam file="$(find fer_rari)/config/costmap_common_params.yaml" command="load" ns="global_costmap" />
+  <rosparam file="$(find fer_rari)/config/costmap_common_params.yaml" command="load" ns="local_costmap" />
+  <rosparam file="$(find fer_rari)/config/local_costmap_params.yaml" command="load" />
+  <rosparam file="$(find fer_rari)/config/global_costmap_params.yaml" command="load" />
+  <rosparam file="$(find fer_rari)/config/base_local_planner_params.yaml" command="load" />
 </node>
 
-<node pkg="f1tenth_gym_ros" type="run_around.py" name="run_around_node" output="screen"/>
-<node pkg="f1tenth_gym_ros" type="pure_pursuit.py" name="pure_pursuit_node" output="screen"/>
 
 <!-- Start GUI for setting initalization parameters. -->
-<node pkg="rqt_gui" type="rqt_gui" name="rqt_gui"/>
+<!--node pkg="rqt_gui" type="rqt_gui" name="rqt_gui"/-->
 
   </launch>

@@ -64,13 +64,13 @@ RUN cd f1tenth_gym && \
 
 RUN /bin/bash -c "source /opt/ros/melodic/setup.bash; mkdir -p catkin_ws/src; cd catkin_ws; catkin_make"
 
-RUN mkdir /catkin_ws/src/f1tenth_gym_ros
+RUN mkdir /catkin_ws/src/fer_rari
 
-COPY . /catkin_ws/src/f1tenth_gym_ros
+COPY . /catkin_ws/src/fer_rari
 
 RUN /bin/bash -c "source /opt/ros/melodic/setup.bash; cd catkin_ws; catkin_make; source devel/setup.bash"
 
 
-CMD ["/catkin_ws/src/f1tenth_gym_ros/start.sh"]
+CMD ["/catkin_ws/src/fer_rari/start.sh"]
 
 # CMD ["roslaunch", "package file.launch"]

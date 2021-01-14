@@ -109,7 +109,7 @@ generate_dynamic_reconfigure_options(
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES f1tenth_gym_ros
+#  LIBRARIES fer_rari
 #  CATKIN_DEPENDS message_filters nav_msgs roscpp rospy sensor_msgs std_msgs visualization_msgs
 #  DEPENDS system_lib
   CATKIN_DEPENDS message_runtime
@@ -128,7 +128,7 @@ include_directories(
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/f1tenth_gym_ros.cpp
+#   src/${PROJECT_NAME}/fer_rari.cpp
 # )
 
 ## Add cmake target dependencies of the library
@@ -139,7 +139,7 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-# add_executable(${PROJECT_NAME}_node src/f1tenth_gym_ros_node.cpp)
+# add_executable(${PROJECT_NAME}_node src/fer_rari_node.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -203,7 +203,7 @@ include_directories(
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_f1tenth_gym_ros.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_fer_rari.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()

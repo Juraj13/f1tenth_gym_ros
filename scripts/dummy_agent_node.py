@@ -5,9 +5,9 @@ from sensor_msgs.msg import LaserScan
 
 class Agent(object):
     def __init__(self):
-        self.drive_pub = rospy.Publisher('/drive', AckermannDriveStamped, queue_size=1)
+        self.drive_pub = rospy.Publisher('fer_rari/drive', AckermannDriveStamped, queue_size=1)
 
-        self.scan_sub = rospy.Subscriber('/scan', LaserScan, self.scan_callback, queue_size=1)
+        self.scan_sub = rospy.Subscriber('fer_rari/scan', LaserScan, self.scan_callback, queue_size=1)
 
     def scan_callback(self, scan_msg):
         # print('got scan, now plan')

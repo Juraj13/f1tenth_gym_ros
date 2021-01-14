@@ -8,7 +8,7 @@ from geometry_msgs.msg import Transform
 from geometry_msgs.msg import Quaternion
 from ackermann_msgs.msg import AckermannDriveStamped
 
-from f1tenth_gym_ros.msg import RaceInfo
+from fer_rari.msg import RaceInfo
 
 from tf2_ros import transform_broadcaster
 from tf.transformations import quaternion_from_euler
